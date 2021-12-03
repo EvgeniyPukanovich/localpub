@@ -1,0 +1,9 @@
+extends layout
+
+block content
+  ul
+    each time_table in time_table_list
+      li
+        a(href=time_table.url) #{time_table.status}
+    else
+      li There are no books.

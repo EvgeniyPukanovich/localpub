@@ -3,6 +3,7 @@ let router = express.Router();
 
 // Require controller modules.
 let waiter_controller = require('../controllers/waiterController');
+let timeTableController = require('../controllers/timeTableController');
 //var author_controller = require('../controllers/authorController');
 //var genre_controller = require('../controllers/genreController');
 //var book_instance_controller = require('../controllers/bookinstanceController');
@@ -32,6 +33,8 @@ router.post('/waiter/:id/update', waiter_controller.waiter_update_post);
 router.get('/waiter/:id', waiter_controller.waiter_detail);
 
 router.get('/waiters', waiter_controller.waiter_list);
+
+router.get('/time_table', timeTableController.time_table_list);
 
 
 // // GET request for list of all Waiter items.

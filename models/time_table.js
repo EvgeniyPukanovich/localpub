@@ -5,7 +5,7 @@ var Schema = mongoose.Schema;
 var TimeTableSchema = new Schema({
     table: { type: Schema.Types.ObjectId, ref: 'Table', required: true },
     status: { type: String, required: true, enum: ['Available', 'Maintenance', 'Reserved', 'Taken'], default: 'Maintenance' },
-
+    free_time: { type: Array, required: true }
 });
 
 TimeTableSchema
