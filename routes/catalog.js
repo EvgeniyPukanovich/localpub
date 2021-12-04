@@ -36,6 +36,7 @@ router.get('/waiters', waiter_controller.waiter_list);
 
 router.get('/time_table', timeTableController.time_table_list);
 
+router.post('/time_table', timeTableController.time_table_reserve)
 
 // // GET request for list of all Waiter items.
 // router.get('/waiters', (res, req, err) => {

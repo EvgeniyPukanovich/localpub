@@ -3,7 +3,11 @@ extends layout
 block content
   ul
     each time_table in time_table_list
-      li
-        a(href=time_table.url) #{time_table.status}
+      li 12: #{time_table._12}
     else
       li There are no books.
+
+  form(action='', method='post')
+    | Table Number: 
+    input(name='number', type='text', placeholder='номер столика')
+    input(value='Registration', type='submit')
