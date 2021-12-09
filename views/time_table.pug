@@ -1,13 +1,33 @@
 extends layout
 
 block content
-  ul
-    each time_table in time_table_list
-      li 12: #{time_table._12}
-    else
-      li There are no books.
+    ul
+        each timetable in time_table_list
+            li Table number - #{timetable.table.number}
+              ol
+                li customer -  #{timetable.customer.first_name}
+                li reservation_date_from - #{timetable.reservation_date_from}
+                li reservation_date_to - #{timetable.reservation_date_to}
+        else
+            li There are no timetables.
 
-  form(action='', method='post')
-    | Table Number: 
-    input(name='number', type='text', placeholder='номер столика')
-    input(value='Registration', type='submit')
+    form(action='', method='post')
+      div.form-group
+        label(for='client_name') Имя:
+        input#client_name.form-control(type='text', placeholder='Ваше имя' name='client_name' required='true' )
+      div.form-group
+        label(for='table_number') Номер столика:
+        select#table_number.form-control(type='text', name='table_number' required='true' )
+          for table in tables
+            option(value=table.number ) #{table.number}
+      div.form-group
+        label(for='time_from') Время начала бронирования:
+        select#time_from.form-control(type='text', name='time_from' required='true' )
+          for time in times
+            option(value=time ) #{time} 
+      div.form-group
+        label(for='time_to') Время окончания бронирования:
+        select#time_to.form-control(type='text', name='time_to' required='true' )
+          for time in times
+            option(value=time ) #{time} 
+      input(value='Заказать', type='submit')

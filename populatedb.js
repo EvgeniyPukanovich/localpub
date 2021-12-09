@@ -11,6 +11,7 @@ if (!userArgs[0].startsWith('mongodb')) {
 let async = require('async');
 let Waiter = require('./models/waiter');
 let Table = require('./models/table');
+let Customer = require('./models/customer');
 let TimeTable = require('./models/time_table');
 
 
@@ -31,6 +32,7 @@ mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection 
 //     location: { type: String },
 // }
 let waiters = [];
+let customers = [];
 let tables = [];
 let time_tables = [];
 
@@ -48,6 +50,21 @@ function waiterCreate(first_name, last_name, date_of_birth, cb) {
         console.log('New Waiter: ' + waiter);
         waiters.push(waiter)
         cb(null, waiter)
+    });
+}
+
+function customerCreate(first_name, last_name, cb) {
+    let waiter_detail = { first_name: first_name, last_name: last_name }
+
+    let customer = new Customer(waiter_detail);
+    customer.save(function(err) {
+        if (err) {
+            cb(err, null)
+            return
+        }
+        console.log('New Waiter: ' + customer);
+        customers.push(customer)
+        cb(null, customer)
     });
 }
 
@@ -71,15 +88,12 @@ function tableCreate(number, capacity, waiter, location, cb) {
     });
 }
 
-function timetableCreate(table, arr, cb) {
+function timetableCreate(table, customer, reservation_date_from, reservation_date_to, cb) {
     let timetable_detail = {
         table: table,
-        _12: arr[0],
-        _14: arr[1],
-        _16: arr[2],
-        _18: arr[3],
-        _20: arr[4],
-        _22: arr[5]
+        customer: customer,
+        reservation_date_from: reservation_date_from,
+        reservation_date_to: reservation_date_to,
     }
 
     let timetable = new TimeTable(timetable_detail);
@@ -114,6 +128,17 @@ function createWaiters(cb) {
     );
 }
 
+function createCustomers(cb) {
+    async.series([
+            function(callback) {
+                customerCreate('Client', 'First', callback);
+            },
+        ],
+        // optional callback
+        cb
+    );
+}
+
 function createTables(cb) {
     async.parallel([
             function(callback) {
@@ -136,23 +161,15 @@ function createTables(cb) {
 function createTimeTables(cb) {
     async.parallel([
             function(callback) {
-                timetableCreate(tables[0], ["Available", "Available", "Maintenance", "Maintenance", "Taken", "Taken"], callback)
+                timetableCreate(tables[0], customers[0], '2021-12-10T16:00:00', '2021-12-10T20:00:00', callback)
             },
-            // function(callback) {
-            //     timetableCreate(tables[1], 'Maintenance', ['13:00', '15:00'], callback)
-            // },
-            // function(callback) {
-            //     timetableCreate(tables[2], 'Available', ['10:00', '12:00', '16:00', '18:00'], callback)
-            // },
-            // function(callback) {
-            //     timetableCreate(tables[3], 'Taken', ['20:00', '22:00'], callback)
-            // }
         ],
         // optional callback
         cb);
 }
 
 async.series([
+    createCustomers,
     createWaiters,
     createTables,
     createTimeTables
