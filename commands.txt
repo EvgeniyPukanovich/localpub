@@ -1,2 +1,3 @@
 node populatedb mongodb+srv://capybara:OYkHMqKTXXMj@cluster0.fqwva.mongodb.net/local_pub?retryWrites=true&w=majority
 SET DEBUG=express-locallibrary-tutorial:* & npm run devstart
+SET NODE_ENV=production & npm run devstart

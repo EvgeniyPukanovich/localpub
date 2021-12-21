@@ -5,7 +5,6 @@ let userArgs = process.argv.slice(2);
 
 if (!userArgs[0].startsWith('mongodb')) {
     console.log('ERROR: You need to specify a valid mongodb URL as the first argument');
-    return
 }
 
 let async = require('async');
@@ -53,8 +52,8 @@ function waiterCreate(first_name, last_name, date_of_birth, cb) {
     });
 }
 
-function customerCreate(first_name, last_name, cb) {
-    let waiter_detail = { first_name: first_name, last_name: last_name }
+function customerCreate(first_name, cb) {
+    let waiter_detail = { name: first_name }
 
     let customer = new Customer(waiter_detail);
     customer.save(function(err) {
@@ -131,7 +130,7 @@ function createWaiters(cb) {
 function createCustomers(cb) {
     async.series([
             function(callback) {
-                customerCreate('Client', 'First', callback);
+                customerCreate('Client', callback);
             },
         ],
         // optional callback

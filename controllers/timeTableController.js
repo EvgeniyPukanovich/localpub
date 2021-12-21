@@ -2,179 +2,196 @@ let TimeTable = require('../models/time_table');
 let Table = require('../models/table');
 let Customer = require('../models/customer');
 
-var async = require('async');
-
-// Display list of all Waiters.
-exports.time_table_list = function(req, res) {
-    let lst = []
-    Customer.find({}).exec(function(err, result) {
-        if (err) { return next(err); }
-        lst = result;
-    })
-    console.log(lst);
-
+exports.time_table_list = function(req, res, next) {
     TimeTable.find({})
         .populate('table')
         .populate('customer')
-        .exec(function(err, list) {
-            let possibleTime = [];
+        .exec(async function(err, list) {
+            let possible_time_from = await get_possible_time_from(1);
+            let possible_time_to = [];
+            if (possible_time_from.length > 0)
+                possible_time_to = await get_possible_time_to(1, possible_time_from[0]);
 
-            for (let i = 12; i < 24; i++) {
-                possibleTime.push(i);
-            }
-
-            Table.find({}, 'number capacity location')
+            Table.find({})
                 .sort({ number: 1 })
                 .exec(function(err, list_tables) {
                     if (err) { return next(err); }
                     let lst = list_tables;
                     // console.log(list)
                     // console.log(lst);
-                    res.render('time_table', { time_table_list: list, tables: lst, times: possibleTime });
+                    res.render('time_table', {
+                        time_table_list: list,
+                        tables: lst,
+                        times_from: possible_time_from,
+                        times_to: possible_time_to
+                    });
                 });
 
             if (err) { return next(err); }
-            //Successful, so render
         });
 };
 
-exports.time_table_reserve = function(req, res) {
+exports.time_table_reserve = async function(req, res, next) {
     console.log(req.body);
     let time_from = Number(req.body.time_from);
     let time_to = Number(req.body.time_to);
+    let table_number = Number(req.body.table_number);
+
     if (time_from === time_to || time_to < time_from) {
         res.send("Некорректный ввод");
         return;
     }
-    TimeTable.find()
+
+    //may be null
+    let time_tabs = await get_time_tables_async(table_number);
+    let reserved_time = get_reserved_time_array(time_tabs);
+    console.log(reserved_time);
+    let desiredTime = [];
+    console.log(desiredTime);
+
+    for (let i = time_from; i < time_to; i++) {
+        desiredTime.push(i);
+    }
+
+    let intersection = desiredTime.filter(x => reserved_time.includes(x));
+
+    if (intersection.length == 0) {
+        let customer = new Customer({
+            name: req.body.client_name,
+        })
+        customer.save(function(err) {
+            if (err) { return next(err); }
+            console.log('created customer')
+        });
+        let from = new Date();
+        from.setHours(time_from, 0, 0);
+
+        let to = new Date();
+        to.setHours(time_to, 0, 0);
+
+        let table = await get_table_async(table_number);
+
+        let time_table = new TimeTable({
+            table: table,
+            customer: customer,
+            reservation_date_from: from,
+            reservation_date_to: to,
+        });
+        time_table.save(function(err) {
+            if (err) {
+                return next(err);
+            }
+        })
+        res.render('reservation_result', { message: 'Вы успешно записались на следующее время: c ' + time_from + ':00 до ' + time_to + ':00' })
+    } else {
+        res.render('reservation_result', { message: 'Что то пошло не так. Попробуйте еще раз' })
+    }
+}
+
+async function get_time_tables_async(table_number) {
+    let time_table;
+    const promise = TimeTable.find()
         .populate({
             path: 'table',
             match: {
-                number: req.body.table_number
+                number: table_number
             }
         })
         .populate('customer')
-        .exec(function(err, time_tables) {
-            tables = time_tables.filter(function(time_table) {
-                return time_table.table; // return only users with email matching 'type: "Gmail"' query
-            });
-            console.log(tables[0]);
-            if (err) {
-                res.send(err);
-            } else {
-                let desiredTime = [];
+        .exec();
 
-                for (let i = time_from; i < time_to; i++) {
-                    desiredTime.push(i);
-                }
-
-                let reserved_time = [];
-                console.log(desiredTime);
-
-                tables.forEach(element => {
-                    let start_hour = element.reservation_date_from.getHours();
-                    let end_hour = element.reservation_date_to.getHours();
-
-                    for (let i = start_hour; i < end_hour; i++) {
-                        reserved_time.push(i);
-                    }
-                });
-                console.log(reserved_time);
-
-                let intersection = desiredTime.filter(x => reserved_time.includes(x));
-
-                if (intersection.length == 0) {
-                    let customer = new Customer({
-                        first_name: req.body.client_name,
-                        last_name: 'jjj'
-                    })
-                    customer.save(function(err) {
-                        if (err) { return next(err); }
-                        // Successful - redirect to new author record.
-                        console.log('created customer')
-                    });
-                    console.log(customer);
-                    var from = new Date();
-                    from.setHours(time_from, 0, 0);
-                    console.log(from);
-                    var to = new Date();
-                    to.setHours(time_to, 0, 0);
-                    console.log(to);
-                    let time_table = new TimeTable({
-                        table: tables[0].table,
-                        customer: customer,
-                        reservation_date_from: from,
-                        reservation_date_to: to,
-                    });
-                    time_table.save(function(err) {
-                        if (err) { return next(err); }
-                        console.log('created time_table')
-                    })
-                    console.log(time_table);
-                    res.send('Вы успешно записались');
-                } else {
-                    res.send('Это время уже занято. Выберете другое время');
-                }
-                console.log(intersection);
-            }
+    await promise.then(time_tables => {
+        let found_time_tables = time_tables.filter(function(time_table) {
+            return time_table.table;
         });
-
-    // Table.findOne({ 'number': req.body.number }, function(err, doc) {
-    //     console.log(doc);
-    //     id = doc._id;
-    //     TimeTable.findOneAndUpdate({ table: { '_id': id } }, { _12: "Reserved" },
-    //         function(err, result) {
-    //             if (err) {
-    //                 res.send(err);
-    //             } else {
-    //                 res.send(result);
-    //             }
-    //         }
-    //     );
-    // });
-
-    //TimeTable.updateOne({ number: 2 }, { $set: { _12: 'Reserved' } })
-    //res.send('reserved');
+        time_table = found_time_tables;
+    });
+    return time_table;
 }
 
+async function get_table_async(table_number) {
+    let table;
 
-// let mongoose = require('mongoose');
-// let mongoDB = "";
-// mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
-// mongoose.Promise = global.Promise;
-// mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+    const promise = Table.find({ number: table_number }).exec();
 
-// function customerCreate(first_name, last_name, cb) {
-//     let waiter_detail = { first_name: first_name, last_name: last_name }
+    await promise.then(t => table = t[0]);
+    return table;
+}
 
-//     let customer = new Customer(waiter_detail);
-//     customer.save(function(err) {
-//         if (err) {
-//             cb(err, null)
-//             return
-//         }
-//         console.log('New Waiter: ' + customer);
-//         customers.push(customer)
-//         cb(null, customer)
-//     });
-// }
+function get_reserved_time_obj(time_table_object) {
+    let reserved_time = [];
 
-// function timetableCreate(table, customer, reservation_date_from, reservation_date_to, cb) {
-//     let timetable_detail = {
-//         table: table,
-//         customer: customer,
-//         reservation_date_from: reservation_date_from,
-//         reservation_date_to: reservation_date_to,
-//     }
+    if (time_table_object == null)
+        return reserved_time;
 
-//     let timetable = new TimeTable(timetable_detail);
-//     timetable.save(function(err) {
-//         if (err) {
-//             cb(err, null)
-//             return
-//         }
-//         console.log('New timetable: ' + timetable);
-//         time_tables.push(timetable);
-//         cb(null, timetable);
-//     });
-// }
+    let start_hour = time_table_object.reservation_date_from.getHours();
+    let end_hour = time_table_object.reservation_date_to.getHours();
+    if (end_hour == 0)
+        end_hour = 24;
+
+    for (let i = start_hour; i < end_hour; i++) {
+        reserved_time.push(i);
+    }
+
+    return reserved_time;
+}
+
+function get_reserved_time_array(time_table_array) {
+    let reserved_time = []
+
+    time_table_array.forEach(element => {
+        let res_time = get_reserved_time_obj(element);
+        reserved_time = reserved_time.concat(res_time);
+    });
+
+    return reserved_time;
+}
+
+async function get_possible_time_from(table_number) {
+    let time_tables = await get_time_tables_async(table_number);
+    let reserved_time = get_reserved_time_array(time_tables);
+
+    let possibleTime = [];
+
+    for (let i = 12; i < 24; i++) {
+        possibleTime.push(i);
+    }
+
+    return possibleTime.filter(x => !reserved_time.includes(x));
+}
+
+async function get_possible_time_to(table_number, time_from) {
+    //console.log(table_number);
+    //console.log(time_from);
+    let time_tables = await get_time_tables_async(table_number);
+    let reserved_time = get_reserved_time_array(time_tables);
+    console.log(reserved_time)
+    time_from = Number(time_from);
+    let time_to = [];
+
+    for (let i = time_from + 1; i <= 24; i++) {
+        time_to.push(i);
+        if (reserved_time.includes(i))
+            break;
+    }
+    console.log(time_to);
+    return time_to;
+}
+
+exports.get_time_from = async function(req, res) {
+    let table_number = req.body.index;
+
+    let difference = await get_possible_time_from(table_number);
+
+    let arr_json = JSON.stringify(difference);
+    res.send(arr_json);
+}
+
+exports.get_time_to = async function(req, res) {
+    let table_number = req.body.table_number;
+    let time_from = req.body.time_from;
+
+    let time_to = await get_possible_time_to(table_number, time_from);
+    let arr_json = JSON.stringify(time_to);
+    res.send(arr_json);
+}

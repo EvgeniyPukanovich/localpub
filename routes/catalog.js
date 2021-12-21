@@ -2,20 +2,17 @@ let express = require('express');
 let router = express.Router();
 
 // Require controller modules.
-let waiter_controller = require('../controllers/waiterController');
+let home_page_controller = require('../controllers/homePageController');
 let timeTableController = require('../controllers/timeTableController');
 
-/// WAITER ROUTES ///
-router.get('/', waiter_controller.index);
+router.get('/', home_page_controller.index);
 
 router.get('/time_table', timeTableController.time_table_list);
 
-router.post('/time_table', timeTableController.time_table_reserve)
+router.post('/time_table', timeTableController.time_table_reserve);
 
-// // GET request for list of all Waiter items.
-// router.get('/waiters', (res, req, err) => {
-//     if (err) return err;
-//     waiter_controller.waiter_list;
-// });
+router.post('/time_table/get_time_from', timeTableController.get_time_from);
+
+router.post('/time_table/get_time_to', timeTableController.get_time_to);
 
 module.exports = router;
