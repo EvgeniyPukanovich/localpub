@@ -7879,3 +7879,5 @@ node_modules/word-wrap/LICENSE
 node_modules/word-wrap/package.json
 node_modules/word-wrap/README.md
 .eslintrc.js
+config.js
+commands.txt
