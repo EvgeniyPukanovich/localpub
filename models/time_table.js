@@ -9,11 +9,5 @@ var TimeTableSchema = new Schema({
     reservation_date_to: { type: Date, required: true },
 });
 
-TimeTableSchema
-    .virtual('url')
-    .get(function() {
-        return '/catalog/time_table/' + this._id;
-    });
-
 //Export model
 module.exports = mongoose.model('TimeTable', TimeTableSchema);

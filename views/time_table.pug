@@ -1,15 +1,13 @@
 extends layout
+block scripts
+  script(src='/javascripts/ajax.js')
 
 block content
     ul
         each timetable in time_table_list
-            li Table number - #{timetable.table.number}
-              ol
-                li customer -  #{timetable.customer.first_name}
-                li reservation_date_from - #{timetable.reservation_date_from}
-                li reservation_date_to - #{timetable.reservation_date_to}
+            li Столик #{timetable.table.number} зарезервирован с #{timetable.reservation_date_from.getHours()} до #{timetable.reservation_date_to.getHours()}
         else
-            li There are no timetables.
+            p Еще не зарезервирован ни один столик. Выбирайте любой!
 
     form(action='', method='post')
       div.form-group
@@ -17,17 +15,17 @@ block content
         input#client_name.form-control(type='text', placeholder='Ваше имя' name='client_name' required='true' )
       div.form-group
         label(for='table_number') Номер столика:
-        select#table_number.form-control(type='text', name='table_number' required='true' )
+        select#table_number.form-control(type='text', name='table_number' required='true' onchange="get_time_from(this.selectedIndex);")
           for table in tables
             option(value=table.number ) #{table.number}
       div.form-group
         label(for='time_from') Время начала бронирования:
-        select#time_from.form-control(type='text', name='time_from' required='true' )
-          for time in times
+        select#time_from.form-control( type='text', name='time_from' required='true' onchange="get_time_to(this.selectedIndex);")
+          for time in times_from
             option(value=time ) #{time} 
       div.form-group
         label(for='time_to') Время окончания бронирования:
         select#time_to.form-control(type='text', name='time_to' required='true' )
-          for time in times
+          for time in times_to
             option(value=time ) #{time} 
       input(value='Заказать', type='submit')
