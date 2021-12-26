@@ -1,7 +1,11 @@
+window.onload = function() {
+    document.getElementById('table_number').addEventListener('change', (event) => { get_time_from(event.target.value) })
+    document.getElementById('time_from').addEventListener('change', (event) => { get_time_to(event.target.value) })
+};
+
 let selected_table = 1;
 
-function get_time_from(selected_index) {
-    let table_number = document.getElementById('table_number').children[selected_index].value;
+function get_time_from(table_number) {
     selected_table = table_number;
     let index = {
         index: table_number,
@@ -9,7 +13,8 @@ function get_time_from(selected_index) {
     fetch('time_table/get_time_from', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json;charset=utf-8'
+                'Content-Type': 'application/json;charset=utf-8',
+                'Content-Security-Policy': 'default-src http:; script-src http:\'unsafe-inline\''
             },
             body: JSON.stringify(index)
         })
@@ -17,7 +22,8 @@ function get_time_from(selected_index) {
         .then(response => {
             if (response.length > 0) {
                 insert_options(response, 'time_from')
-                get_time_to(0);
+                console.log(response[0]);
+                get_time_to(response[0]);
             } else {
                 insert_options(response, 'time_from')
                 insert_options(response, 'time_to')
@@ -25,9 +31,7 @@ function get_time_from(selected_index) {
         });
 }
 
-function get_time_to(selected_index) {
-    let time_from = document.getElementById('time_from').children[selected_index].value;
-
+function get_time_to(time_from) {
     let obj = {
         table_number: selected_table,
         time_from: time_from
@@ -36,7 +40,8 @@ function get_time_to(selected_index) {
     fetch('time_table/get_time_to', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json;charset=utf-8'
+                'Content-Type': 'application/json;charset=utf-8',
+                'Content-Security-Policy': 'default-src http:; script-src http:\'unsafe-inline\''
             },
             body: JSON.stringify(obj)
         })

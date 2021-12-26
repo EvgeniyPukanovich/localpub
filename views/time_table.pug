@@ -15,12 +15,12 @@ block content
         input#client_name.form-control(type='text', placeholder='Ваше имя' name='client_name' required='true' )
       div.form-group
         label(for='table_number') Номер столика:
-        select#table_number.form-control(type='text', name='table_number' required='true' onchange="get_time_from(this.selectedIndex);")
+        select#table_number.form-control(type='text', name='table_number' required='true' )
           for table in tables
             option(value=table.number ) #{table.number}
       div.form-group
         label(for='time_from') Время начала бронирования:
-        select#time_from.form-control( type='text', name='time_from' required='true' onchange="get_time_to(this.selectedIndex);")
+        select#time_from.form-control( type='text', name='time_from' required='true')
           for time in times_from
             option(value=time ) #{time} 
       div.form-group

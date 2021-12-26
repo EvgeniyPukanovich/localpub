@@ -11,7 +11,9 @@ var catalogRouter = require('./routes/catalog'); //Import routes for "catalog" a
 let db_connection = require('./config.js');
 
 var app = express();
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false,
+}));
 
 //Set up mongoose connection
 var mongoose = require('mongoose');
