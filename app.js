@@ -10,10 +10,12 @@ process.env.TZ = 'Asia/Yekaterinburg'
 var mainRouter = require('./routes/main'); //Import routes for "catalog" area of site
 let db_connection = '';
 try {
-    db_connection = require('./config.js');
+    db_connection = require('./confssig.js');
 } catch (error) {
     console.log(error);
 }
+console.log('+++++++++++++++++++++++++++++++++++++++++++++++');
+console.log(process.env.MONGODB_URI);
 
 var app = express();
 app.use(helmet());
