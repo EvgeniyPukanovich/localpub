@@ -8,7 +8,12 @@ var helmet = require('helmet');
 process.env.TZ = 'Asia/Yekaterinburg'
 
 var mainRouter = require('./routes/main'); //Import routes for "catalog" area of site
-let db_connection = require('./config.js');
+let db_connection = '';
+try {
+    db_connection = require('./config.js');
+} catch (error) {
+    console.log(error);
+}
 
 var app = express();
 app.use(helmet());
