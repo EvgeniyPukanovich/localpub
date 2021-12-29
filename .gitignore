@@ -1,3 +1,4 @@
 node_modules/
 commands.txt
 .eslintrc.js
+config.js
