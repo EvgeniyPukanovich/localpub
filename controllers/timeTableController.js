@@ -2,6 +2,12 @@ let TimeTable = require('../models/time_table');
 let Table = require('../models/table');
 let Customer = require('../models/customer');
 
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
 exports.time_table_list = function(req, res, next) {
     TimeTable.find({})
         .populate('table')
@@ -17,8 +23,7 @@ exports.time_table_list = function(req, res, next) {
                 .exec(function(err, list_tables) {
                     if (err) { return next(err); }
                     let lst = list_tables;
-                    // console.log(list)
-                    // console.log(lst);
+
                     res.render('time_table', {
                         time_table_list: list,
                         tables: lst,
@@ -32,7 +37,6 @@ exports.time_table_list = function(req, res, next) {
 };
 
 exports.time_table_reserve = async function(req, res, next) {
-    console.log(req.body);
     let time_from = Number(req.body.time_from);
     let time_to = Number(req.body.time_to);
     let table_number = Number(req.body.table_number);
@@ -45,9 +49,7 @@ exports.time_table_reserve = async function(req, res, next) {
     //may be null
     let time_tabs = await get_time_tables_async(table_number);
     let reserved_time = get_reserved_time_array(time_tabs);
-    console.log(reserved_time);
     let desiredTime = [];
-    console.log(desiredTime);
 
     for (let i = time_from; i < time_to; i++) {
         desiredTime.push(i);
@@ -70,19 +72,32 @@ exports.time_table_reserve = async function(req, res, next) {
         to.setHours(time_to, 0, 0);
 
         let table = await get_table_async(table_number);
+        let code = Math.floor(Math.random() * 9000) + 1000;
+
+        let expire_date = new Date();
+        console.log(expire_date);
+        expire_date.setHours(0, 0, 0);
+        console.log(expire_date);
+        expire_date = expire_date.addDays(1);
+        console.log(expire_date);
 
         let time_table = new TimeTable({
             table: table,
             customer: customer,
             reservation_date_from: from,
             reservation_date_to: to,
+            code: code,
+            expireAt: expire_date
         });
         time_table.save(function(err) {
             if (err) {
                 return next(err);
             }
         })
-        res.render('reservation_result', { message: 'Вы успешно записались на следующее время: c ' + time_from + ':00 до ' + time_to + ':00' })
+        res.render('reservation_result', {
+            message: 'Вы успешно записались на следующее время: c ' + time_from + ':00 до ' + time_to + ':00.' +
+                ' При входе в паб назовите админстратору ваш уникальный код: ' + code
+        })
     } else {
         res.render('reservation_result', { message: 'Что то пошло не так. Попробуйте еще раз' })
     }

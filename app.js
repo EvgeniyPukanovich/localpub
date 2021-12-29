@@ -5,15 +5,13 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var helmet = require('helmet');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var catalogRouter = require('./routes/catalog'); //Import routes for "catalog" area of site
+process.env.TZ = 'Asia/Yekaterinburg'
+
+var mainRouter = require('./routes/main'); //Import routes for "catalog" area of site
 let db_connection = require('./config.js');
 
 var app = express();
-app.use(helmet({
-    contentSecurityPolicy: false,
-}));
+app.use(helmet());
 
 //Set up mongoose connection
 var mongoose = require('mongoose');
@@ -32,9 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/catalog', catalogRouter); // Add catalog routes to middleware chain.
+app.use('/', mainRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

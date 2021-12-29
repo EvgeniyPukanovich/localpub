@@ -4,10 +4,3 @@ block content
   h1= title
   p Добро пожаловать в паб Local Pub.  
 
-  if error
-    p Error getting dynamic content.
-  else
-    p Столько официантов обслуживает столики
-
-    ul
-      li #[strong Официанты:] !{data.waiter_count}

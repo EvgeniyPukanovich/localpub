@@ -4,9 +4,6 @@ var Schema = mongoose.Schema;
 
 var TableSchema = new Schema({
     number: { type: Number, required: true },
-    capacity: { type: Number, required: true },
-    waiter: { type: Schema.Types.ObjectId, ref: 'Waiter', required: true },
-    location: { type: String },
 });
 
 //Export model

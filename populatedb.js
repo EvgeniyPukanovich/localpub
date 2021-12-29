@@ -8,7 +8,6 @@ if (!userArgs[0].startsWith('mongodb')) {
 }
 
 let async = require('async');
-let Waiter = require('./models/waiter');
 let Table = require('./models/table');
 let Customer = require('./models/customer');
 let TimeTable = require('./models/time_table');
@@ -20,42 +19,16 @@ mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoose.Promise = global.Promise;
 mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-// let testWaiter = {
-
-// }
-// let testTable = {
-//     _id: '61aa53be626abe7ad7d31181',
-//     number: 3,
-//     capacity: 2,
-//     waiter: { type: Schema.Types.ObjectId, ref: 'Waiter', required: true },
-//     location: { type: String },
-// }
-let waiters = [];
 let customers = [];
 let tables = [];
 let time_tables = [];
 
-function waiterCreate(first_name, last_name, date_of_birth, cb) {
-    let waiter_detail = { first_name: first_name, last_name: last_name }
-    if (date_of_birth !== false) waiter_detail.date_of_birth = date_of_birth;
-    if (date_of_birth !== false) waiter_detail.date_of_death = date_of_birth;
-
-    let waiter = new Waiter(waiter_detail);
-    waiter.save(function(err) {
-        if (err) {
-            cb(err, null)
-            return
-        }
-        console.log('New Waiter: ' + waiter);
-        waiters.push(waiter)
-        cb(null, waiter)
-    });
-}
 
 function customerCreate(first_name, cb) {
-    let waiter_detail = { name: first_name }
 
-    let customer = new Customer(waiter_detail);
+    let customer_detail = { name: first_name }
+
+    let customer = new Customer(customer_detail);
     customer.save(function(err) {
         if (err) {
             cb(err, null)
@@ -67,12 +40,9 @@ function customerCreate(first_name, cb) {
     });
 }
 
-function tableCreate(number, capacity, waiter, location, cb) {
+function tableCreate(number, cb) {
     let table_detail = {
         number: number,
-        capacity: capacity,
-        waiter: waiter,
-        location: location
     }
 
     let table = new Table(table_detail);
@@ -87,12 +57,13 @@ function tableCreate(number, capacity, waiter, location, cb) {
     });
 }
 
-function timetableCreate(table, customer, reservation_date_from, reservation_date_to, cb) {
+function timetableCreate(table, customer, reservation_date_from, reservation_date_to, code, cb) {
     let timetable_detail = {
         table: table,
         customer: customer,
         reservation_date_from: reservation_date_from,
         reservation_date_to: reservation_date_to,
+        code: code
     }
 
     let timetable = new TimeTable(timetable_detail);
@@ -107,30 +78,13 @@ function timetableCreate(table, customer, reservation_date_from, reservation_dat
     });
 }
 
-function createWaiters(cb) {
-    async.series([
-            function(callback) {
-                waiterCreate('Patrick', 'Peters', '1996-06-06', callback);
-            },
-            function(callback) {
-                waiterCreate('Ben', 'Davis', '2000-11-08', callback);
-            },
-            function(callback) {
-                waiterCreate('Kate', 'Mills', '1993-01-02', callback);
-            },
-            function(callback) {
-                waiterCreate('Betty', 'Bronte', '1999-09-13', callback);
-            },
-        ],
-        // optional callback
-        cb
-    );
-}
-
 function createCustomers(cb) {
     async.series([
             function(callback) {
-                customerCreate('Client', callback);
+                customerCreate('Client1', callback);
+            },
+            function(callback) {
+                customerCreate('Client2', callback);
             },
         ],
         // optional callback
@@ -141,16 +95,16 @@ function createCustomers(cb) {
 function createTables(cb) {
     async.parallel([
             function(callback) {
-                tableCreate(1, 4, waiters[0], "Near the window", callback);
+                tableCreate(1, callback);
             },
             function(callback) {
-                tableCreate(2, 6, waiters[1], "In the center of the hall", callback);
+                tableCreate(2, callback);
             },
             function(callback) {
-                tableCreate(3, 2, waiters[2], "Next to the bar", callback);
+                tableCreate(3, callback);
             },
             function(callback) {
-                tableCreate(4, 4, waiters[3], "In the corner of the hall", callback);
+                tableCreate(4, callback);
             }
         ],
         // optional callback
@@ -168,10 +122,9 @@ function createTimeTables(cb) {
 }
 
 async.series([
-    createCustomers,
-    createWaiters,
+    //createCustomers,
     createTables,
-    createTimeTables
+    //createTimeTables
 ], function cb(err, results) {
     if (err) {
         console.log('FINAL ERR: ' + err);
